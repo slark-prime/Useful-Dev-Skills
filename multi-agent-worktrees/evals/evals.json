@@ -1,0 +1,33 @@
+{
+  "skill_name": "multi-agent-worktrees",
+  "evals": [
+    {
+      "id": 0,
+      "name": "no-signal-feature",
+      "prompt": "Implement a new API route at GET /api/status that returns {ok: true} as JSON. This is a Next.js App Router project; the route file goes at app/api/status/route.ts.",
+      "expected_behavior": "Skill fires, runs the concurrency check, finds no parallel signals (fresh repo, 1 commit, no other worktrees, no recent multi-branch activity, cwd is main). Outputs a one-line note that single-agent mode applies and the SOP is available if that changes, then proceeds to implement the feature on the current branch. Does NOT create a new worktree.",
+      "setup_script": "setups/no-signal.sh"
+    },
+    {
+      "id": 1,
+      "name": "signal-existing-worktrees",
+      "prompt": "Implement a user profile page at /profile that shows the logged-in user's email and lets them edit their display name.",
+      "expected_behavior": "Skill fires, runs the concurrency check. `git worktree list` reveals 2 existing worktrees on branches feat/billing-a and feat/search-b with recent commits. Skill detects this as a multi-agent signal, proposes a new worktree for the profile feature (branch like feat/user-profile, sibling directory path), creates the worktree, and works there.",
+      "setup_script": "setups/existing-worktrees.sh"
+    },
+    {
+      "id": 2,
+      "name": "signal-explicit-framing",
+      "prompt": "I'm going to have another agent work on the billing webhook in parallel. Can you add an auth middleware that validates Bearer tokens on all /api/* routes?",
+      "expected_behavior": "Skill fires. `git worktree list` shows only main checkout, but the user's message explicitly mentions 'another agent' and 'in parallel'. Skill treats this as a signal, proposes a new worktree for the auth middleware work (branch like feat/auth-middleware), creates it, and works there.",
+      "setup_script": "setups/no-signal.sh"
+    },
+    {
+      "id": 3,
+      "name": "already-in-worktree",
+      "prompt": "Add a loading spinner component that appears while the dashboard data is being fetched.",
+      "expected_behavior": "Skill fires. Concurrency check reveals cwd is itself a linked worktree (git --git-dir != --git-common-dir), already isolated on branch feat/dashboard. Skill does NOT create a nested worktree. Notes the existing isolation and works in place on the current branch.",
+      "setup_script": "setups/cwd-is-worktree.sh"
+    }
+  ]
+}
