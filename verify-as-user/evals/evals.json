@@ -1,0 +1,26 @@
+{
+  "skill_name": "verify-as-user",
+  "evals": [
+    {
+      "id": 0,
+      "name": "app-only-feature",
+      "prompt": "I just added a /dashboard page that's supposed to show the logged-in user's avatar and display name. Can you verify it actually works? No third-party stuff — just my app.",
+      "expected_behavior": "Skill fires. Phase 1 inspects the fake Next.js repo. Phase 2 classifies as app-only (no OAuth, no external services). Phase 3 checks env (dev server up or guidance to start), doesn't need ngrok. Phase 4-6 produces a plan with steps that stay entirely inside the app — navigate, check DOM, screenshot, assert. Report uses the mandated format with 'Classification: app-only'.",
+      "setup_script": "setups/fake-next-app.sh"
+    },
+    {
+      "id": 1,
+      "name": "connector-initiation-boundary",
+      "prompt": "Verify that clicking the 'Connect Notion' button in my app correctly starts the OAuth flow and opens Notion's authorize page with the right parameters.",
+      "expected_behavior": "Skill fires. Classifies as connector-initiation. Plan explicitly STOPS at Notion's authorize URL — does not attempt Notion login, does not try to complete OAuth. Plan asserts on URL params (client_id, redirect_uri, scope, state) rather than trying to log into Notion. Env check notes ngrok needed for callback. Report classification shows 'connector-initiation'.",
+      "setup_script": "setups/fake-next-app.sh"
+    },
+    {
+      "id": 2,
+      "name": "full-third-party-degrades",
+      "prompt": "Verify that sending an email via my Gmail integration end-to-end actually delivers the email to the recipient.",
+      "expected_behavior": "Skill fires. Classifies as full-third-party. Absent explicit stable test credentials (not present in the fake repo), the skill DEGRADES to connector-initiation scope — verifies the Gmail authorize URL instead of trying to actually send an email. Explicitly refuses to automate Google login / 2FA. Report notes the boundary stop and labels the full integration as 'untested, third-party layer'.",
+      "setup_script": "setups/fake-next-app.sh"
+    }
+  ]
+}

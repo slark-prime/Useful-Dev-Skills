@@ -50,6 +50,26 @@ Prevents git `.git` checkout collisions when multiple coding agents (or humans) 
 
 Biggest win: catching user-phrase signals (e.g. "have another agent do X in parallel") that a baseline agent otherwise ignores. See [`multi-agent-worktrees/SKILL.md`](./multi-agent-worktrees/SKILL.md) for the full decision tree.
 
+### [`verify-as-user`](./verify-as-user/)
+
+Drive the app end-to-end like a real user — boot the local stack, open a browser, trigger the feature, inspect every layer, and report whether it works. Leads with the **boundary rule** that stops the agent from burning time trying to automate Google's 2FA or a captcha:
+
+- **app-only** flow → full browser automation (Playwright MCP preferred).
+- **connector-initiation** flow → stop at the authorize URL, assert on OAuth params (`client_id`, `redirect_uri`, `scope`, `state`). Never attempt third-party login.
+- **full-third-party** flow → require explicit stable test credentials; otherwise degrade to connector-initiation scope and label the third-party layer as untested by design.
+
+Every failure in the report is tagged with a layer (frontend / backend / env-config / third-party) so the user knows exactly where to look. Fixes blocking env bugs silently; prompts on secrets, DB state, and product decisions.
+
+**Benchmark** (1 iteration, 3 test cases, 1 run each):
+
+| Metric | With Skill | Baseline | Delta |
+|---|---|---|---|
+| Pass rate | 100% (16/16) | 81% (13/16) | **+19 pp** |
+| Wall time | 185s ± 40 | 227s ± 25 | **−42s (skill is faster)** |
+| Tokens | 33.8k ± 1.8k | 35.3k ± 1.8k | **−1.5k (skill is cheaper)** |
+
+Baselines were competent at classification and boundary respect — where the skill pulls ahead is the **mandated report format** (Classification, layer tags, Reproduction, Automation-stopped-at) that makes outcomes comparable across sessions. Skill also short-circuits exploration, so it's faster and cheaper too. See [`verify-as-user/SKILL.md`](./verify-as-user/SKILL.md) for the full decision tree.
+
 ## Contributing
 
 Issues and PRs welcome. If you add a skill:
